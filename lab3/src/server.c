@@ -97,12 +97,16 @@ void weather_gen(int connfd, struct recv_content* new_recv_content) {
   new_send_content.day = (unsigned char)timeinfo->tm_mday;
 
   if(new_recv_content->option == 0x01) { // generate one day's weather
-  	new_send_content.useless = 0x41;
-	new_send_content.unit_num = 0x1;
-
-	new_send_content.day1_weather = rand()%5;
-	new_send_content.day1_temp = rand()%40;
-
+	if(new_recv_content->day_num == 0x09) {
+	  new_send_content.res = 0x04;
+  	  new_send_content.useless = 0x41;
+  	  new_send_content.unit_num = 0x1;
+	} else {
+  	  new_send_content.useless = 0x41;
+  	  new_send_content.unit_num = 0x1;
+  	  new_send_content.day1_weather = rand()%5;
+  	  new_send_content.day1_temp = rand()%40;
+	}
 	kick_out(connfd, &new_send_content);
   } else if(new_recv_content->option == 0x02) { // generate three days' weathers
   	new_send_content.useless = 0x42;

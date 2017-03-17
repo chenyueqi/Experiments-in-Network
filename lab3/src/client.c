@@ -25,7 +25,6 @@ enum CLIET_STATES {
   INIT,
   WEL,
   QUERY,
-  CLOSE
 };
 
 #pragma pack(1)
@@ -161,32 +160,37 @@ int query(char *city_name) {
 		if('0' <= day_num[0] && 
 			day_num[0] <= '9' && 
 			day_num[1] == '\0') {
-		  kick_out(0x02, 0x01, city_name, 0x3);
+		  kick_out(0x02, 0x01, city_name, day_num[0]-'0');
 		  struct recv_content new_recv_content;
 		  swallow_in(&new_recv_content);
-		  unsigned short year = ntohs(new_recv_content.year);
-		  unsigned char month = new_recv_content.month;
-		  unsigned char day = new_recv_content.day;
-		  // information output
-		  fprintf(stdout, "City: %s  Today is: %4u/%02u/%02u  Weather information is as follows:\n",
-		  	   city_name, year, month, day);
-		  if (day_num[0] == '1') {	  
-			fprintf(stdout, "Today's Weather is: ");
-	  		weather_print(new_recv_content.day1_weather);
-	  		fprintf(stdout, ";\tTemp:%u\n", new_recv_content.day1_temp);
+		  if (new_recv_content.res == 0x04) {
+			fprintf(stdout, "Sorry, no given day's weather information for city %s!\n", new_recv_content.city_name);
+			break;
+		  } else if (new_recv_content.res == 0x03) {
+  			unsigned short year = ntohs(new_recv_content.year);
+  			unsigned char month = new_recv_content.month;
+  			unsigned char day = new_recv_content.day;
+  			// information output
+  			fprintf(stdout, "City: %s  Today is: %4u/%02u/%02u  Weather information is as follows:\n", 
+				city_name, year, month, day);
+  			if (day_num[0] == '1') {	  
+  			  fprintf(stdout, "Today's Weather is: ");
+  			  weather_print(new_recv_content.day1_weather);
+  			  fprintf(stdout, ";\tTemp:%u\n", new_recv_content.day1_temp);
+  			} else {
+  			  fprintf(stdout, "The %cth day's Weather is: ", day_num[0]);
+  			  weather_print(new_recv_content.day1_weather);
+  			  fprintf(stdout, ";  Temp:%u\n", new_recv_content.day1_temp);
+  			}
+  			break;
 		  } else {
-	  		fprintf(stdout, "The %cth day's Weather is: ", day_num[0]);
-	  		weather_print(new_recv_content.day1_weather);
-	  		fprintf(stdout, ";  Temp:%u\n", new_recv_content.day1_temp);
+  			fprintf(stdout, "input error\n");		  
 		  }
-		  break;
-		} else {
-		  fprintf(stdout, "input error\n");		  
-		}
-	  }
-	} else {  
-	  fprintf(stdout, "input error!\n");
-  	}
+  		} else {  
+  		  fprintf(stdout, "input error!\n");
+  		}
+  	  }
+	}
   }
   return 0;
 }
